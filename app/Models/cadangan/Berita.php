@@ -8,9 +8,7 @@ class Berita extends Model
 {
     protected $table      = 'berita';
     protected $primaryKey = 'id_berita';
-    public    $incrementing = true;
-    protected $keyType    = 'int';
-    public    $timestamps = false;
+    public    $timestamps = false; // tabel tidak punya created_at / updated_at
 
     protected $fillable = [
         'Judul',

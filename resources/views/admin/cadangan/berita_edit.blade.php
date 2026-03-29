@@ -6,8 +6,7 @@
 
 @section('content')
 
-{{-- FIX: pass object $berita, bukan $berita->id_berita --}}
-<form method="POST" action="{{ route('admin.berita.update', $berita) }}" enctype="multipart/form-data">
+<form method="POST" action="{{ route('admin.berita.update', $berita->id_berita) }}" enctype="multipart/form-data">
 @csrf
 @method('PUT')
 
@@ -158,9 +157,8 @@
                     <strong style="color:var(--danger)">Zona Berbahaya</strong><br>
                     Menghapus berita tidak dapat dibatalkan.
                 </p>
-                {{-- FIX: pass object $berita, bukan $berita->id_berita --}}
                 <form method="POST"
-                      action="{{ route('admin.berita.destroy', $berita) }}"
+                      action="{{ route('admin.berita.destroy', $berita->id_berita) }}"
                       onsubmit="return confirm('Yakin ingin menghapus berita ini? Tindakan ini tidak dapat dibatalkan.')">
                     @csrf
                     @method('DELETE')

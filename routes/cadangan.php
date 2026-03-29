@@ -20,7 +20,7 @@ Route::get('/footer', function () {
 // Menggunakan controller utama (di luar folder admin)
 Route::get('/berita', [BeritaController::class, 'index']);
 
-// ─── Admin ────────────────────────────────────────────────────────────────────
+// ─── Admin Login ─────────────────────────────────────────────────────────────
 Route::prefix('admin')->name('admin.')->group(function () {
 
     // Login (hanya bisa diakses jika belum login)
@@ -38,11 +38,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
             return view('admin.dashboard');
         })->name('dashboard');
 
-        // FIX: tambahkan ->parameters() agar route parameter tetap {berita}, bukan {beritum}
-        Route::resource('berita', AdminBeritaController::class)
-            ->parameters(['berita' => 'berita']);
+        // Menggunakan alias 'AdminBeritaController' agar tidak bentrok
+        Route::resource('berita', AdminBeritaController::class);
 
-        // Update status berita (publish/draft)
+        // Update status berita (publish/draft) menggunakan alias
         Route::patch('/berita/{berita}/status', [AdminBeritaController::class, 'updateStatus'])
             ->name('berita.status');
     });
