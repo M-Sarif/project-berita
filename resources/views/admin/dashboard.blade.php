@@ -7,11 +7,12 @@
 @section('content')
 
 @php
-    $totalBerita  = \App\Models\Berita::count();
-    $published    = \App\Models\Berita::where('status','publish')->count();
-    $draft        = \App\Models\Berita::where('status','draft')->count();
-    $totalView    = \App\Models\Berita::sum('view');
-    $latestBerita = \App\Models\Berita::orderBy('tanggal_publish','desc')->limit(5)->get();
+    $totalBerita   = \App\Models\Berita::count();
+    $published     = \App\Models\Berita::where('status','publish')->count();
+    $draft         = \App\Models\Berita::where('status','draft')->count();
+    $totalView     = \App\Models\Berita::sum('view');
+    $totalHeadline = \App\Models\Berita::where('is_headline', 1)->count();
+    $latestBerita  = \App\Models\Berita::orderBy('tanggal_publish','desc')->limit(5)->get();
 @endphp
 
 {{-- Stat Cards --}}
@@ -53,6 +54,18 @@
     </div>
 
     <div class="stat-card">
+        <div class="stat-icon" style="background:#fefce8">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#eab308" stroke-width="2">
+                <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <h3>{{ $totalHeadline }}</h3>
+            <p>Headline</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
         <div class="stat-icon" style="background:#fff7ed">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#f97316" stroke-width="2">
                 <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -82,39 +95,123 @@
         <table>
             <thead>
                 <tr>
+                    <th style="width:64px">Foto</th>
                     <th>Judul</th>
                     <th>Kategori</th>
                     <th>Status</th>
                     <th>Tanggal</th>
                     <th>Views</th>
+                    <th style="text-align:center;width:90px">Headline</th>
+                    <th style="width:110px">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($latestBerita as $b)
                 <tr>
-                    <td style="max-width:280px">
-                        <a href="{{ route('admin.berita.edit', $b->id_berita) }}"
-                           style="color:var(--blue-dark);font-weight:600;text-decoration:none;">
-                            {{ Str::limit($b->Judul, 60) }}
+
+                    {{-- Thumbnail --}}
+                    <td>
+                        @if ($b->gambar)
+                            <img
+                                src="{{ Storage::url($b->gambar) }}"
+                                alt="{{ $b->Judul }}"
+                                style="width:56px;height:40px;object-fit:cover;border-radius:6px;display:block"
+                            >
+                        @else
+                            <div style="width:56px;height:40px;background:var(--gray-100);border-radius:6px;display:flex;align-items:center;justify-content:center">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="var(--gray-400)" stroke-width="1.5" style="width:18px;height:18px">
+                                    <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                        @endif
+                    </td>
+
+                    {{-- Judul --}}
+                    <td style="max-width:220px">
+                        <a href="{{ route('admin.berita.edit', $b) }}"
+                           style="color:var(--blue-dark);font-weight:600;text-decoration:none">
+                            {{ Str::limit($b->Judul, 50) }}
                         </a>
                         <div style="font-size:0.75rem;color:var(--gray-400);margin-top:2px">
                             {{ $b->author }}
                         </div>
                     </td>
-                    <td><span style="font-size:0.8125rem">{{ $b->Kategori }}</span></td>
+
+                    <td style="font-size:0.8125rem">{{ $b->Kategori }}</td>
+
                     <td>
                         <span class="badge {{ $b->status === 'publish' ? 'badge-publish' : 'badge-draft' }}">
                             {{ $b->status }}
                         </span>
                     </td>
-                    <td style="font-size:0.8125rem;color:var(--gray-500)">
+
+                    <td style="font-size:0.8125rem;color:var(--gray-500);white-space:nowrap">
                         {{ $b->tanggal_publish ? $b->tanggal_publish->format('d M Y') : '-' }}
                     </td>
+
                     <td style="font-size:0.875rem">{{ number_format($b->view) }}</td>
+
+                    {{-- Toggle Headline --}}
+                    <td style="text-align:center">
+                        <form method="POST"
+                              action="{{ route('admin.berita.headline', $b) }}"
+                              style="margin:0;display:inline">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit"
+                                    title="{{ $b->is_headline ? 'Copot dari Headline' : 'Jadikan Headline' }}"
+                                    style="
+                                        border:none;cursor:pointer;
+                                        background:{{ $b->is_headline ? '#fef9c3' : '#f1f5f9' }};
+                                        color:{{ $b->is_headline ? '#a16207' : '#94a3b8' }};
+                                        border-radius:6px;padding:0.3rem 0.6rem;
+                                        font-size:0.8rem;font-weight:600;
+                                        display:inline-flex;align-items:center;gap:0.3rem;
+                                    ">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                     fill="{{ $b->is_headline ? 'currentColor' : 'none' }}"
+                                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                                     style="width:14px;height:14px">
+                                    <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                                </svg>
+                                {{ $b->is_headline ? 'Headline' : 'Set' }}
+                            </button>
+                        </form>
+                    </td>
+
+                    {{-- Aksi: Edit & Hapus --}}
+                    <td>
+                        <div style="display:flex;gap:0.4rem;align-items:center">
+
+                            {{-- Edit --}}
+                            <a href="{{ route('admin.berita.edit', $b) }}"
+                               class="btn btn-secondary btn-sm"
+                               title="Edit">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </a>
+
+                            {{-- Hapus --}}
+                            <form method="POST"
+                                  action="{{ route('admin.berita.destroy', $b) }}"
+                                  onsubmit="return confirm('Hapus berita \'{{ addslashes($b->Judul) }}\'?')"
+                                  style="margin:0">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-sm" title="Hapus">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" style="text-align:center;color:var(--gray-400);padding:2rem">
+                    <td colspan="8" style="text-align:center;color:var(--gray-400);padding:2rem">
                         Belum ada berita.
                     </td>
                 </tr>
@@ -123,6 +220,5 @@
         </table>
     </div>
 </div>
-
 
 @endsection

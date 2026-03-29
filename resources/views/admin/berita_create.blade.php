@@ -66,6 +66,29 @@
             </div>
         </div>
 
+        {{-- Hastag --}}
+        <div class="card">
+            <div class="card-header"><h2>Hastag</h2></div>
+            <div class="card-body">
+                <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label" for="hastag">Hastag</label>
+                    <input
+                        type="text"
+                        id="hastag"
+                        name="hastag"
+                        value="{{ old('hastag') }}"
+                        class="form-control {{ $errors->has('hastag') ? 'is-invalid' : '' }}"
+                        placeholder="Contoh: #PendidikanTinggi #Beasiswa #PTMA"
+                        maxlength="100"
+                    >
+                    <div class="form-hint">Pisahkan dengan spasi. Contoh: #Beasiswa #Prestasi</div>
+                    @error('hastag')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
     </div>
 
     {{-- Kolom Kanan: Meta --}}
@@ -75,6 +98,27 @@
         <div class="card">
             <div class="card-header"><h2>Publikasi</h2></div>
             <div class="card-body">
+
+                {{-- Author (bisa diketik manual) --}}
+                <div class="form-group">
+                    <label class="form-label" for="author">
+                        Author <span class="required">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="author"
+                        name="author"
+                        value="{{ old('author', Auth::user()->name) }}"
+                        class="form-control {{ $errors->has('author') ? 'is-invalid' : '' }}"
+                        placeholder="Nama penulis..."
+                        maxlength="50"
+                        required
+                    >
+                    @error('author')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
                 <div class="form-group">
                     <label class="form-label" for="status">
                         Status <span class="required">*</span>
@@ -83,6 +127,21 @@
                         <option value="draft"   {{ old('status','draft') === 'draft'   ? 'selected' : '' }}>Draft</option>
                         <option value="publish" {{ old('status') === 'publish' ? 'selected' : '' }}>Publish</option>
                     </select>
+                </div>
+
+                {{-- Headline Toggle --}}
+                <div class="form-group" style="margin-bottom:1rem">
+                    <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.875rem;font-weight:500;color:var(--gray-700)">
+                        <input
+                            type="checkbox"
+                            name="is_headline"
+                            value="1"
+                            {{ old('is_headline') ? 'checked' : '' }}
+                            style="width:16px;height:16px;cursor:pointer;accent-color:var(--primary)"
+                        >
+                        Jadikan Headline
+                    </label>
+                    <div class="form-hint" style="margin-top:0.3rem">Berita akan tampil di bagian Headline halaman utama.</div>
                 </div>
 
                 <div style="display:flex;gap:0.75rem">
@@ -97,7 +156,7 @@
             </div>
         </div>
 
-        {{-- Kategori --}}
+        {{-- Kategori — Headline & Berita dihapus sesuai permintaan --}}
         <div class="card">
             <div class="card-header"><h2>Kategori</h2></div>
             <div class="card-body" style="padding-bottom:1.25rem">
@@ -107,7 +166,14 @@
                     </label>
                     <select id="Kategori" name="Kategori" class="form-control {{ $errors->has('Kategori') ? 'is-invalid' : '' }}" required>
                         <option value="">— Pilih Kategori —</option>
-                        @foreach (['Berita', 'Headline', 'Beasiswa', 'Prestasi', 'Penelitian dan Inovasi', 'Pendidikan', 'Seminar/Workshop', 'Liputan/Berita'] as $kat)
+                        @foreach ([
+                            'Beasiswa',
+                            'Prestasi',
+                            'Penelitian dan Inovasi',
+                            'Pendidikan',
+                            'Seminar/Workshop',
+                            'Liputan/Berita',
+                        ] as $kat)
                             <option value="{{ $kat }}" {{ old('Kategori') === $kat ? 'selected' : '' }}>{{ $kat }}</option>
                         @endforeach
                     </select>
@@ -171,7 +237,6 @@ function previewImage(input) {
     }
 }
 
-// Char counter
 const textarea  = document.getElementById('Konten');
 const charCount = document.getElementById('char-count');
 function updateCount() {

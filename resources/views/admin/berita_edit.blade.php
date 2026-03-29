@@ -6,16 +6,28 @@
 
 @section('content')
 
-{{-- FIX: pass object $berita, bukan $berita->id_berita --}}
-<form method="POST" action="{{ route('admin.berita.update', $berita) }}" enctype="multipart/form-data">
+{{--
+    PENTING: Form UPDATE ditutup sebelum card Zona Berbahaya.
+    Form DELETE berdiri sendiri DI LUAR form update.
+    HTML melarang nested <form> — jika form hapus ada di dalam form update,
+    browser mengabaikan form dalam dan @method('DELETE') menimpa @method('PUT'),
+    sehingga klik "Update" malah menjalankan DELETE.
+--}}
+
+{{-- ======================== FORM UPDATE (ditutup sebelum form hapus) ======================== --}}
+<form id="form-update"
+      method="POST"
+      action="{{ route('admin.berita.update', $berita) }}"
+      enctype="multipart/form-data">
 @csrf
 @method('PUT')
 
 <div style="display:grid;grid-template-columns:1fr 340px;gap:1.5rem;align-items:start">
 
-    {{-- Kolom Kiri --}}
+    {{-- ── Kolom Kiri ── --}}
     <div style="display:flex;flex-direction:column;gap:1.25rem">
 
+        {{-- Judul --}}
         <div class="card">
             <div class="card-body">
                 <div class="form-group" style="margin-bottom:0">
@@ -37,6 +49,7 @@
             </div>
         </div>
 
+        {{-- Konten --}}
         <div class="card">
             <div class="card-header"><h2>Konten Berita</h2></div>
             <div class="card-body">
@@ -61,20 +74,62 @@
             </div>
         </div>
 
+        {{-- Hastag --}}
+        <div class="card">
+            <div class="card-header"><h2>Hastag</h2></div>
+            <div class="card-body">
+                <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label" for="hastag">Hastag</label>
+                    <input
+                        type="text"
+                        id="hastag"
+                        name="hastag"
+                        value="{{ old('hastag', $berita->hastag) }}"
+                        class="form-control {{ $errors->has('hastag') ? 'is-invalid' : '' }}"
+                        placeholder="Contoh: #PendidikanTinggi #Beasiswa #PTMA"
+                        maxlength="100"
+                    >
+                    <div class="form-hint">Pisahkan dengan spasi. Contoh: #Beasiswa #Prestasi</div>
+                    @error('hastag') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    {{-- Kolom Kanan --}}
+    {{-- ── Kolom Kanan ── --}}
     <div style="display:flex;flex-direction:column;gap:1.25rem">
 
+        {{-- Publikasi --}}
         <div class="card">
             <div class="card-header"><h2>Publikasi</h2></div>
             <div class="card-body">
+
+                <div style="font-size:0.8125rem;color:var(--gray-500);margin-bottom:0.875rem">
+                    <strong>Ditulis:</strong> {{ $berita->tanggal_publish?->format('d M Y, H:i') }}<br>
+                    <strong>Views:</strong> {{ number_format($berita->view) }}
+                </div>
+
+                {{-- Author --}}
                 <div class="form-group">
-                    <div style="font-size:0.8125rem;color:var(--gray-500);margin-bottom:0.75rem">
-                        <strong>Author:</strong> {{ $berita->author }}<br>
-                        <strong>Ditulis:</strong> {{ $berita->tanggal_publish?->format('d M Y, H:i') }}<br>
-                        <strong>Views:</strong> {{ number_format($berita->view) }}
-                    </div>
+                    <label class="form-label" for="author">
+                        Author <span class="required">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="author"
+                        name="author"
+                        value="{{ old('author', $berita->author) }}"
+                        class="form-control {{ $errors->has('author') ? 'is-invalid' : '' }}"
+                        placeholder="Nama penulis..."
+                        maxlength="50"
+                        required
+                    >
+                    @error('author') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+
+                {{-- Status --}}
+                <div class="form-group">
                     <label class="form-label" for="status">
                         Status <span class="required">*</span>
                     </label>
@@ -82,6 +137,21 @@
                         <option value="draft"   {{ old('status', $berita->status) === 'draft'   ? 'selected' : '' }}>Draft</option>
                         <option value="publish" {{ old('status', $berita->status) === 'publish' ? 'selected' : '' }}>Publish</option>
                     </select>
+                </div>
+
+                {{-- Headline --}}
+                <div class="form-group" style="margin-bottom:1rem">
+                    <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.875rem;font-weight:500;color:var(--gray-700)">
+                        <input
+                            type="checkbox"
+                            name="is_headline"
+                            value="1"
+                            {{ old('is_headline', $berita->is_headline) ? 'checked' : '' }}
+                            style="width:16px;height:16px;cursor:pointer;accent-color:var(--primary)"
+                        >
+                        Jadikan Headline
+                    </label>
+                    <div class="form-hint" style="margin-top:0.3rem">Berita akan tampil di bagian Headline halaman utama.</div>
                 </div>
 
                 <div style="display:flex;gap:0.75rem">
@@ -96,6 +166,7 @@
             </div>
         </div>
 
+        {{-- Kategori --}}
         <div class="card">
             <div class="card-header"><h2>Kategori</h2></div>
             <div class="card-body" style="padding-bottom:1.25rem">
@@ -105,7 +176,14 @@
                     </label>
                     <select id="Kategori" name="Kategori" class="form-control {{ $errors->has('Kategori') ? 'is-invalid' : '' }}" required>
                         <option value="">— Pilih Kategori —</option>
-                        @foreach (['Berita', 'Headline', 'Beasiswa', 'Prestasi', 'Penelitian dan Inovasi', 'Pendidikan', 'Seminar/Workshop', 'Liputan/Berita'] as $kat)
+                        @foreach ([
+                            'Beasiswa',
+                            'Prestasi',
+                            'Penelitian dan Inovasi',
+                            'Pendidikan',
+                            'Seminar/Workshop',
+                            'Liputan/Berita',
+                        ] as $kat)
                             <option value="{{ $kat }}" {{ old('Kategori', $berita->Kategori) === $kat ? 'selected' : '' }}>{{ $kat }}</option>
                         @endforeach
                     </select>
@@ -123,6 +201,7 @@
             </div>
         </div>
 
+        {{-- Gambar --}}
         <div class="card">
             <div class="card-header"><h2>Gambar Utama</h2></div>
             <div class="card-body">
@@ -151,32 +230,56 @@
             </div>
         </div>
 
-        {{-- Hapus Berita --}}
+        {{--
+            ZONA BERBAHAYA — card ini hanya tampilan, tombol hapus di dalamnya
+            akan men-submit form-hapus yang TERPISAH di bawah (di luar form update).
+            Kita pakai attribute form="form-hapus" agar tombol ini tetap bisa
+            berada di dalam card yang sama secara visual, tapi terhubung ke
+            form yang benar (bukan form-update).
+        --}}
         <div class="card" style="border-color:#fecaca">
             <div class="card-body">
                 <p style="font-size:0.8125rem;color:var(--gray-600);margin-bottom:0.875rem">
                     <strong style="color:var(--danger)">Zona Berbahaya</strong><br>
                     Menghapus berita tidak dapat dibatalkan.
                 </p>
-                {{-- FIX: pass object $berita, bukan $berita->id_berita --}}
-                <form method="POST"
-                      action="{{ route('admin.berita.destroy', $berita) }}"
-                      onsubmit="return confirm('Yakin ingin menghapus berita ini? Tindakan ini tidak dapat dibatalkan.')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger" style="width:100%;justify-content:center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
-                        Hapus Berita Ini
-                    </button>
-                </form>
+                {{--
+                    form="form-hapus" → tombol ini submit ke form#form-hapus
+                    yang ada di luar form update, bukan ke form update.
+                --}}
+                <button
+                    type="submit"
+                    form="form-hapus"
+                    class="btn btn-danger"
+                    style="width:100%;justify-content:center"
+                    onclick="return confirm('Yakin ingin menghapus berita ini? Tindakan ini tidak dapat dibatalkan.')"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Hapus Berita Ini
+                </button>
             </div>
         </div>
 
     </div>
 </div>
 
+</form>
+{{-- ======================== END FORM UPDATE ======================== --}}
+
+
+{{--
+    FORM HAPUS — berdiri sendiri DI LUAR form update.
+    id="form-hapus" dipakai oleh tombol di card Zona Berbahaya via atribut form="form-hapus".
+    Form ini tidak terlihat (display:none) — hanya digunakan sebagai target submit.
+--}}
+<form id="form-hapus"
+      method="POST"
+      action="{{ route('admin.berita.destroy', $berita) }}"
+      style="display:none">
+    @csrf
+    @method('DELETE')
 </form>
 
 @endsection

@@ -17,7 +17,7 @@ Route::get('/footer', function () {
     return view('footer');
 });
 
-// Menggunakan controller utama (di luar folder admin)
+// Controller publik (di luar folder admin)
 Route::get('/berita', [BeritaController::class, 'index']);
 
 // ─── Admin ────────────────────────────────────────────────────────────────────
@@ -38,12 +38,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
             return view('admin.dashboard');
         })->name('dashboard');
 
-        // FIX: tambahkan ->parameters() agar route parameter tetap {berita}, bukan {beritum}
+        // Resource berita — parameter tetap {berita}, bukan {beritum}
         Route::resource('berita', AdminBeritaController::class)
             ->parameters(['berita' => 'berita']);
 
-        // Update status berita (publish/draft)
+        // Quick action: update status (publish/draft)
         Route::patch('/berita/{berita}/status', [AdminBeritaController::class, 'updateStatus'])
             ->name('berita.status');
+
+        // Quick action: toggle headline
+        Route::patch('/berita/{berita}/headline', [AdminBeritaController::class, 'toggleHeadline'])
+            ->name('berita.headline');
     });
 });

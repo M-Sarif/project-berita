@@ -17,13 +17,16 @@ class Berita extends Model
         'Kategori',
         'Konten',
         'gambar',
+        'hastag',
         'author',
         'tanggal_publish',
         'status',
         'view',
+        'is_headline',  // kolom baru: 0 = biasa, 1 = headline
     ];
 
     protected $casts = [
         'tanggal_publish' => 'datetime',
+        'is_headline'     => 'boolean',
     ];
 }
